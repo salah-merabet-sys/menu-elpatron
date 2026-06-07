@@ -154,53 +154,162 @@
   ],
   "categories": [
     {
-      "id": "starters",
-      "name": "Starters",
-      "icon": "fa-leaf",
-      "description": "Light beginnings to awaken the palate",
+      "id": "pizza",
+      "name": "Pizza",
+      "icon": "fa-pizza-slice",
+      "description": "",
       "visible": true,
       "order": 0
     },
     {
-      "id": "mains",
-      "name": "Main Courses",
-      "icon": "fa-fire-flame-curved",
-      "description": "The heart of our kitchen",
+      "id": "burgers",
+      "name": "Burgers",
+      "icon": "fa-burger",
+      "description": "",
       "visible": true,
       "order": 1
     },
     {
-      "id": "pasta",
-      "name": "Sides",
+      "id": "plates",
+      "name": "plates",
       "icon": "fa-bowl-rice",
-      "description": "Accompaniments and small plates",
+      "description": "",
       "visible": true,
       "order": 2
-    },
-    {
-      "id": "grill",
-      "name": "From the Grill",
-      "icon": "fa-drumstick-bite",
-      "description": "Charcoal-fired and wood-smoked specialties",
-      "visible": true,
-      "order": 3
-    },
-    {
-      "id": "drinks",
-      "name": "Drinks",
-      "icon": "fa-wine-glass",
-      "description": "Curated beverages and soft options",
-      "visible": true,
-      "order": 4
-    },
-    {
-      "id": "desserts",
-      "name": "Desserts",
-      "icon": "fa-cake-candles",
-      "description": "Sweet finales crafted in-house daily",
-      "visible": true,
-      "order": 5
     }
   ],
-  "items": []
+  "items": [
+    {
+      "id": 1780866508461,
+      "name": "Pizza Margarita",
+      "category": "pizza",
+      "price": 300,
+      "description": "",
+      "image": "assets/images/1780866502481-file-000000001194720ca23eea3ac7a4bd91-png-2.webp",
+      "available": true,
+      "featured": false,
+      "tag": ""
+    },
+    {
+      "id": 1780866554577,
+      "name": "Pizza 4 Fromages",
+      "category": "pizza",
+      "price": 500,
+      "description": "",
+      "image": "assets/images/1780866596477-file-000000001194720ca23eea3ac7a4bd91-png-3.webp",
+      "available": true,
+      "featured": false,
+      "tag": ""
+    },
+    {
+      "id": 1780866672723,
+      "name": "Pizza Poulet champinion",
+      "category": "pizza",
+      "price": 500,
+      "description": "",
+      "image": "assets/images/1780866623803-file-000000001194720ca23eea3ac7a4bd91-png-5.webp",
+      "available": true,
+      "featured": false,
+      "tag": ""
+    },
+    {
+      "id": 1780866702374,
+      "name": "Pizza Viande Hachée",
+      "category": "pizza",
+      "price": 600,
+      "description": "",
+      "image": "assets/images/1780866700705-file-000000001194720ca23eea3ac7a4bd91-png-4.webp",
+      "available": true,
+      "featured": false,
+      "tag": ""
+    },
+    {
+      "id": 1780866740946,
+      "name": "Classic Burger",
+      "category": "burgers",
+      "price": 350,
+      "description": "",
+      "image": "assets/images/1780866730370-1780862634652-png-2.webp",
+      "available": true,
+      "featured": false,
+      "tag": "Popular"
+    },
+    {
+      "id": 1780866788683,
+      "name": "Double Cheese Burger",
+      "category": "burgers",
+      "price": 450,
+      "description": "",
+      "image": "assets/images/1780866782493-1780862634652-png-3.webp",
+      "available": true,
+      "featured": false,
+      "tag": ""
+    },
+    {
+      "id": 1780866844419,
+      "name": "Crispy Chicken Burger",
+      "category": "burgers",
+      "price": 500,
+      "description": "",
+      "image": "assets/images/1780866840075-1780862634652-png-4.webp",
+      "available": true,
+      "featured": false,
+      "tag": ""
+    },
+    {
+      "id": 1780866872776,
+      "name": "Le Grand Burger",
+      "category": "burgers",
+      "price": 600,
+      "description": "",
+      "image": "assets/images/1780866867719-1780862634652-png-5.webp",
+      "available": true,
+      "featured": false,
+      "tag": "Special"
+    },
+    {
+      "id": 1780866960353,
+      "name": "Plat Escalope Crème",
+      "category": "plates",
+      "price": 500,
+      "description": "",
+      "image": "assets/images/1780866949202-1780862670879-png-2.webp",
+      "available": true,
+      "featured": false,
+      "tag": "Popular"
+    },
+    {
+      "id": 1780866988945,
+      "name": "Plat Chawarma",
+      "category": "plates",
+      "price": 500,
+      "description": "",
+      "image": "assets/images/1780866980914-1780862670879-png-3.webp",
+      "available": true,
+      "featured": false,
+      "tag": ""
+    },
+    {
+      "id": 1780867022909,
+      "name": "Plat Brochettes",
+      "category": "plates",
+      "price": 450,
+      "description": "",
+      "image": "assets/images/1780867017221-1780862670879-png-4.webp",
+      "available": true,
+      "featured": false,
+      "tag": ""
+    },
+    {
+      "id": 1780867063760,
+      "name": "Plat Mixte",
+      "category": "plates",
+      "price": 650,
+      "description": "",
+      "image": "assets/images/1780867054387-1780862670879-png-5.webp",
+      "available": true,
+      "featured": false,
+      "tag": "Special"
+    }
+  ]
 }
