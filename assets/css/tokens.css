@@ -1,0 +1,215 @@
+/* ============================================================
+   THEME ENGINE v4 — tokens.css
+   Single source of truth for all design variables.
+   All values are injected at runtime by engine.js / studio.js
+   via <style id="live-tokens">. This file provides:
+     1. Safe fallback :root defaults (Gold preset)
+     2. Layout engine — pure CSS attribute selectors on <body>
+     3. Card style variants
+     4. Density scale
+     5. Image ratio system
+   No per-theme CSS rules. No data-theme selectors.
+   Presets live entirely in JS as token objects.
+============================================================ */
+
+/* ── 1. FALLBACK ROOT — overwritten at runtime ── */
+:root {
+  /* Colors */
+  --c-primary:       #c09a5a;
+  --c-primary-dk:    #8c6e38;
+  --c-primary-lt:    #d4b278;
+  --c-bg:            #f8f4ee;
+  --c-surface:       #ffffff;
+  --c-surface-mid:   #f0e9dc;
+  --c-surface-deep:  #e5d9c7;
+  --c-text:          #1a1814;
+  --c-text-soft:     #6b6058;
+  --c-text-muted:    #9e9488;
+  --c-border:        #ddd4c0;
+  --c-border-lt:     #ece5d8;
+
+  /* Shadows */
+  --sh-sm: 0 2px 8px  rgba(26,24,20,.07);
+  --sh-md: 0 8px 28px rgba(26,24,20,.12);
+  --sh-lg: 0 20px 56px rgba(26,24,20,.18);
+
+  /* Radius */
+  --r-base: 14px;
+  --r-card: 14px;
+  --r-sm:   9px;
+  --r-pill: 50px;
+
+  /* Spacing */
+  --sp-section: 56px;
+  --sp-card-gap: 20px;
+  --sp-card-pad: 18px;
+
+  /* Typography */
+  --ff-display: 'Cormorant Garamond', Georgia, serif;
+  --ff-body:    'Jost', system-ui, sans-serif;
+  --ff-accent:  'Jost', system-ui, sans-serif;
+
+  /* Transition */
+  --t: .24s cubic-bezier(.4,0,.2,1);
+
+  /* Derived hero gradient — rebuilt by JS when colors change */
+  --hero-bg: linear-gradient(160deg, var(--c-surface-mid) 0%, var(--c-bg) 100%);
+}
+
+/* ── 2. LAYOUT MODE ── */
+
+/* GRID */
+[data-layout="grid"] .items-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--col-count, 3), 1fr);
+  gap: var(--sp-card-gap);
+}
+[data-layout="grid"] .menu-card { flex-direction: column; }
+
+/* LIST */
+[data-layout="list"] .items-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-layout="list"] .menu-card {
+  flex-direction: row;
+  align-items: stretch;
+}
+[data-layout="list"] .card-img-wrap {
+  width: 140px;
+  min-width: 140px;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 0;
+}
+[data-layout="list"] .card-name  { font-size: 1rem; }
+[data-layout="list"] .card-desc  { -webkit-line-clamp: 2; }
+
+/* COMPACT */
+[data-layout="compact"] .items-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--c-border-lt);
+  border-radius: var(--r-base);
+  overflow: hidden;
+}
+[data-layout="compact"] .menu-card {
+  flex-direction: row;
+  align-items: center;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--c-border-lt);
+  padding: 12px 16px;
+  gap: 12px;
+  transform: none !important;
+  box-shadow: none !important;
+}
+[data-layout="compact"] .menu-card:last-child { border-bottom: none; }
+[data-layout="compact"] .menu-card:hover { background: var(--c-surface-mid); }
+[data-layout="compact"] .card-img-wrap {
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
+}
+[data-layout="compact"] .card-body {
+  padding: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+[data-layout="compact"] .card-desc  { display: none; }
+[data-layout="compact"] .card-name  { font-size: .88rem; margin-bottom: 0; flex: 1; }
+[data-layout="compact"] .card-footer { flex-shrink: 0; }
+
+/* ── 3. COLUMN COUNT — set --col-count via body attribute ── */
+[data-columns="2"] { --col-count: 2; }
+[data-columns="3"] { --col-count: 3; }
+[data-columns="4"] { --col-count: 4; }
+[data-columns="5"] { --col-count: 5; }
+
+/* ── 4. DENSITY — overrides spacing tokens in-scope ── */
+[data-density="tight"] {
+  --sp-card-gap:  10px;
+  --sp-card-pad:  12px;
+  --sp-section:   36px;
+}
+[data-density="normal"] {
+  --sp-card-gap:  20px;
+  --sp-card-pad:  18px;
+  --sp-section:   56px;
+}
+[data-density="spacious"] {
+  --sp-card-gap:  32px;
+  --sp-card-pad:  26px;
+  --sp-section:   80px;
+}
+
+/* ── 5. CARD STYLE ── */
+[data-card-style="flat"] .menu-card {
+  box-shadow: none;
+  border: 1.5px solid var(--c-border);
+}
+[data-card-style="flat"] .menu-card:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--c-primary);
+}
+[data-card-style="shadow"] .menu-card {
+  border: none;
+  box-shadow: var(--sh-sm);
+}
+[data-card-style="shadow"] .menu-card:hover {
+  box-shadow: var(--sh-lg);
+}
+[data-card-style="glass"] .menu-card {
+  background: rgba(255,255,255,.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,.4);
+  box-shadow: var(--sh-sm);
+}
+[data-card-style="glass"] .menu-card:hover {
+  background: rgba(255,255,255,.75);
+  box-shadow: var(--sh-md);
+}
+
+/* ── 6. IMAGE RATIO ── */
+[data-image-ratio="1:1"] .card-img-wrap {
+  aspect-ratio: 1/1;
+  height: auto;
+}
+[data-image-ratio="4:3"] .card-img-wrap {
+  aspect-ratio: 4/3;
+  height: auto;
+}
+[data-image-ratio="16:9"] .card-img-wrap {
+  aspect-ratio: 16/9;
+  height: auto;
+}
+
+/* ── 7. DARK MODE — injected by JS as token overrides ── */
+/* Nothing lives here. Dark tokens are a JS preset object
+   identical in structure to light presets. */
+
+/* ── 8. RESPONSIVE COLUMN CLAMP ── */
+@media (max-width: 900px) {
+  [data-layout="grid"] .items-grid {
+    grid-template-columns: repeat(
+      min(var(--col-count, 3), 2), 1fr
+    );
+  }
+}
+@media (max-width: 560px) {
+  [data-layout="grid"] .items-grid {
+    grid-template-columns: 1fr;
+  }
+  [data-layout="list"] .card-img-wrap {
+    width: 100px;
+    min-width: 100px;
+  }
+}

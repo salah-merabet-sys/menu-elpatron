@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Theme Studio — Menu Engine v4</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="stylesheet" href="assets/css/tokens.css"/>
+<link rel="stylesheet" href="assets/css/admin.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- Shared live-token injection point (same tag engine.js writes to) -->
+<style id="live-tokens"></style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- ════════════════════════════════════════════
+     CONFIRM DIALOG
+════════════════════════════════════════════ -->
+<div id="confirm-overlay" class="hidden">
+  <div class="confirm-box">
+    <div class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h3>Are you sure?</h3>
+    <p id="confirm-msg">This action cannot be undone.</p>
+    <div class="confirm-row">
+      <button class="btn btn-ghost" onclick="Studio.closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" onclick="Studio.execConfirm()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     CATEGORY MODAL
+════════════════════════════════════════════ -->
+<div id="cat-modal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-head">
+      <h2 id="cat-modal-title">Add Category</h2>
+      <button class="modal-close" onclick="Studio.closeCatModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Name *</label>
+        <input id="cm-name" type="text" class="input" placeholder="e.g. Desserts"/>
+      </div>
+      <div class="field">
+        <label>ID <small style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-text-muted)">auto from name</small></label>
+        <input id="cm-id" type="text" class="input" placeholder="e.g. desserts"/>
+        <div class="field-hint">Lowercase, hyphens. Fixed after creation.</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <input id="cm-desc" type="text" class="input" placeholder="Short subtitle shown on menu"/>
+    </div>
+
+    <div class="field">
+      <label>Icon</label>
+      <div class="icon-grid" id="cm-icon-grid"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Studio.closeCatModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="Studio.saveCat()">
+        <i class="fa-solid fa-floppy-disk"></i> Save Category
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     ITEM MODAL
+════════════════════════════════════════════ -->
+<div id="item-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="item-modal-title">Add Item</h2>
+      <button class="modal-close" onclick="Studio.closeItemModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Name *</label>
+        <input id="item-name" type="text" class="input" placeholder="e.g. Grilled Salmon"/>
+      </div>
+      <div class="field">
+        <label>Price *</label>
+        <input id="item-price" type="number" class="input" placeholder="0" min="0" step="0.01"/>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <textarea id="item-desc" class="input" rows="2" placeholder="Brief description…"></textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Category *</label>
+        <select id="item-cat" class="input"></select>
+      </div>
+      <div class="field">
+        <label>Badge Tag</label>
+        <select id="item-tag" class="input">
+          <option value="">None</option>
+          <option value="Popular">Popular</option>
+          <option value="New">New</option>
+          <option value="Special">Special</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Image</label>
+      <div id="img-area">
+        <input type="file" id="img-file" accept="image/*"
+               onchange="Studio.handleImgFile(this)"/>
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <p>Click or drag &amp; drop</p>
+        <span>JPG · PNG · WEBP · max 5 MB</span>
+      </div>
+      <div id="img-preview-box">
+        <img id="img-preview" src="" alt="Preview"/>
+        <button class="img-remove" onclick="Studio.removeImg()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <label class="check-row">
+        <input type="checkbox" id="item-avail" checked/>
+        <span>Available</span>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" id="item-featured"/>
+        <span><i class="fa-solid fa-star" style="color:var(--c-primary);font-size:.8rem"></i> Featured</span>
+      </label>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="Studio.closeItemModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="Studio.saveItem()">
+        <i class="fa-solid fa-floppy-disk"></i> Save Item
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     LOGIN VIEW
+════════════════════════════════════════════ -->
+<div id="login-view">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-logo"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <h1>Theme Studio</h1>
+        <p>Menu Engine v4</p>
+      </div>
+
+      <div id="login-error" class="login-error hidden">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span></span>
+      </div>
+
+      <div class="field">
+        <label>Username</label>
+        <input id="login-user" type="text" class="input"
+               placeholder="Username" autocomplete="username"/>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="pass-wrap">
+          <input id="login-pass" type="password" class="input"
+                 placeholder="Password" autocomplete="current-password"
+                 onkeydown="if(event.key==='Enter') Studio.login()"/>
+          <button class="pass-eye" onclick="Studio.togglePassVis('login-pass',this)">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-login" onclick="Studio.login()">
+        <i class="fa-solid fa-right-to-bracket"></i> Enter Studio
+      </button>
+      <a class="login-back" href="index.html">
+        <i class="fa-solid fa-arrow-left"></i> View public menu
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     STUDIO VIEW
+════════════════════════════════════════════ -->
+<div id="studio-view" class="hidden">
+<div class="studio-shell">
+
+  <!-- Top bar -->
+  <header class="studio-topbar">
+    <div class="studio-wordmark">Theme<span>Studio</span></div>
+
+    <!-- Tab strip -->
+    <nav class="studio-tabs">
+      <button class="studio-tab active" data-tab="design"
+              onclick="Studio.switchTab('design')">
+        <i class="fa-solid fa-palette"></i>
+        <span>Design</span>
+      </button>
+      <button class="studio-tab" data-tab="fonts"
+              onclick="Studio.switchTab('fonts')">
+        <i class="fa-solid fa-font"></i>
+        <span>Fonts</span>
+      </button>
+      <button class="studio-tab" data-tab="layout"
+              onclick="Studio.switchTab('layout')">
+        <i class="fa-solid fa-table-cells"></i>
+        <span>Layout</span>
+      </button>
+      <button class="studio-tab" data-tab="hero"
+              onclick="Studio.switchTab('hero')">
+        <i class="fa-solid fa-image"></i>
+        <span>Hero</span>
+      </button>
+      <button class="studio-tab" data-tab="sections"
+              onclick="Studio.switchTab('sections')">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>Sections</span>
+      </button>
+      <button class="studio-tab" data-tab="content"
+              onclick="Studio.switchTab('content')">
+        <i class="fa-solid fa-bowl-food"></i>
+        <span>Content</span>
+      </button>
+      <button class="studio-tab" data-tab="export"
+              onclick="Studio.switchTab('export')">
+        <i class="fa-solid fa-file-zipper"></i>
+        <span>Export</span>
+      </button>
+    </nav>
+
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="Studio.toggleDark()" title="Toggle dark mode">
+        <i class="fa-solid fa-moon dark-icon"></i>
+      </button>
+      <a class="icon-btn" href="index.html" target="_blank" title="Preview menu">
+        <i class="fa-solid fa-eye"></i>
+      </a>
+      <button class="icon-btn" onclick="Studio.logout()" title="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Body: controls left + preview right -->
+  <div class="studio-body">
+
+    <!-- ── LEFT CONTROLS ── -->
+    <div class="studio-controls">
+
+      <!-- ══════════════ TAB: DESIGN ══════════════ -->
+      <div id="panel-design" class="tab-panel active">
+
+        <!-- Presets -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-swatchbook"></i> Colour Presets
+          </div>
+          <div id="preset-grid"></div>
+          <div class="info-note" style="margin-top:14px">
+            <i class="fa-solid fa-circle-info"></i>
+            Selecting a preset replaces all colour and shadow tokens.
+            Radius, spacing and fonts are preserved.
+          </div>
+        </div>
+
+        <!-- Colours -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-droplet"></i> Colour Tokens
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button id="color-tab-light" class="cat-pill active" onclick="Studio.setColorTab('light')" style="font-size:.78rem;padding:5px 14px"><i class="fa-solid fa-sun"></i> Light</button>
+            <button id="color-tab-dark"  class="cat-pill"        onclick="Studio.setColorTab('dark')"  style="font-size:.78rem;padding:5px 14px"><i class="fa-solid fa-moon"></i> Dark</button>
+          </div>
+          <div id="color-tokens"></div>
+          <div class="info-note">
+            <i class="fa-solid fa-circle-info"></i>
+            Every colour maps directly to a <code>--c-*</code> CSS variable applied globally via <code>:root</code>.
+          </div>
+        </div>
+
+        <!-- Radius -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-vector-square"></i> Corner Radius
+          </div>
+          <div id="radius-tokens"></div>
+        </div>
+
+        <!-- Spacing -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-arrows-up-down"></i> Spacing
+          </div>
+          <div id="spacing-tokens"></div>
+        </div>
+
+      </div><!-- /panel-design -->
+
+      <!-- ══════════════ TAB: FONTS ══════════════ -->
+      <div id="panel-fonts" class="tab-panel">
+
+        <!-- Font presets -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-star"></i> Font Presets
+          </div>
+          <div id="font-preset-grid"></div>
+          <div class="info-note" style="margin-top:14px">
+            <i class="fa-solid fa-circle-info"></i>
+            Presets load curated Google Font pairs.
+            All three roles (Display · Body · Accent) are set at once.
+          </div>
+        </div>
+
+        <!-- Custom font selectors -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-sliders"></i> Custom Combination
+          </div>
+          <div class="font-custom-block">
+            <div class="field" style="margin-bottom:0">
+              <label>Display Font — headings &amp; titles</label>
+              <select id="font-display-sel" class="input"
+                      onchange="Studio.setDisplayFont(this.value)">
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label>Body &amp; Accent Font — descriptions, prices, UI</label>
+              <select id="font-body-sel" class="input"
+                      onchange="Studio.setBodyFont(this.value)">
+              </select>
+            </div>
+          </div>
+          <div class="info-note" style="margin-top:14px">
+            <i class="fa-solid fa-circle-info"></i>
+            Fonts are loaded from Google Fonts at runtime.
+            Changing here switches the preset to <strong>Custom</strong>.
+          </div>
+        </div>
+
+        <!-- Live font preview -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-eye"></i> Live Preview
+          </div>
+          <div style="padding:4px 0">
+            <div style="font-family:var(--ff-display);font-size:2rem;font-weight:700;line-height:1.15;color:var(--c-text);margin-bottom:6px">
+              The Quick Brown Fox
+            </div>
+            <div style="font-family:var(--ff-display);font-size:1.3rem;font-style:italic;color:var(--c-primary);margin-bottom:16px">
+              Italic Display Style
+            </div>
+            <div style="font-family:var(--ff-body);font-size:.9rem;color:var(--c-text-soft);line-height:1.7;margin-bottom:10px">
+              Body text: Crafted with passion and served with elegance. Every dish tells a story of tradition, quality ingredients, and careful preparation by our chefs.
+            </div>
+            <div style="font-family:var(--ff-accent);font-size:1.15rem;font-weight:700;color:var(--c-primary-dk)">
+              4,500 DA &nbsp;·&nbsp; Price Accent
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /panel-fonts -->
+
+      <!-- ══════════════ TAB: LAYOUT ══════════════ -->
+      <div id="panel-layout" class="tab-panel">
+
+        <!-- Mode -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-table-cells"></i> Layout Mode
+          </div>
+          <div class="radio-cards">
+            <label class="radio-card">
+              <input type="radio" name="mode" value="grid" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-grip"></i>
+                <strong>Grid</strong>
+                <span>Card columns</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="mode" value="list" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-list"></i>
+                <strong>List</strong>
+                <span>Horizontal rows</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="mode" value="compact" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-bars"></i>
+                <strong>Compact</strong>
+                <span>Dense table</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Columns (grid only) -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-columns"></i> Columns <small style="text-transform:none;letter-spacing:0;font-weight:400">(grid mode)</small>
+          </div>
+          <div class="range-row">
+            <input type="range" id="col-range" min="2" max="5" step="1" value="3"
+                   oninput="Studio.updateColLabel(this.value); Studio.onLayoutChange()"/>
+            <div class="range-label" id="col-label">3</div>
+          </div>
+          <div class="range-note">2 – 5 columns. Collapses to 2 on tablet, 1 on mobile.</div>
+        </div>
+
+        <!-- Card style -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-id-card"></i> Card Style
+          </div>
+          <div class="radio-cards">
+            <label class="radio-card">
+              <input type="radio" name="cardStyle" value="flat" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-regular fa-square"></i>
+                <strong>Flat</strong>
+                <span>Border only</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="cardStyle" value="shadow" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-square"></i>
+                <strong>Shadow</strong>
+                <span>Elevated</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="cardStyle" value="glass" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-martini-glass"></i>
+                <strong>Glass</strong>
+                <span>Frosted</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Image ratio -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-image"></i> Image Ratio
+          </div>
+          <div class="radio-cards">
+            <label class="radio-card">
+              <input type="radio" name="imageRatio" value="1:1" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-square"></i>
+                <strong>1:1</strong>
+                <span>Square</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="imageRatio" value="4:3" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-image"></i>
+                <strong>4:3</strong>
+                <span>Classic</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="imageRatio" value="16:9" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-film"></i>
+                <strong>16:9</strong>
+                <span>Wide</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Density -->
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-compress"></i> Spacing Density
+          </div>
+          <div class="radio-cards">
+            <label class="radio-card">
+              <input type="radio" name="density" value="tight" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-minimize"></i>
+                <strong>Tight</strong>
+                <span>Compact gaps</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="density" value="normal" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-equals"></i>
+                <strong>Normal</strong>
+                <span>Default</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="density" value="spacious" onchange="Studio.onLayoutChange()"/>
+              <div class="radio-card-inner">
+                <i class="fa-solid fa-maximize"></i>
+                <strong>Spacious</strong>
+                <span>Airy feel</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="info-note">
+          <i class="fa-solid fa-circle-info"></i>
+          All layout values map to <code>data-*</code> attributes on <code>&lt;body&gt;</code>.
+          Pure CSS — zero JS layout calculation.
+        </div>
+
+      </div><!-- /panel-layout -->
+
+      <!-- ══════════════ TAB: HERO ══════════════ -->
+      <div id="panel-hero" class="tab-panel">
+
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-image"></i> Hero Layout
+          </div>
+          <div id="hero-layout-grid" class="hero-layout-grid"></div>
+          <div class="info-note" style="margin-top:14px">
+            <i class="fa-solid fa-circle-info"></i>
+            Click a layout to switch instantly. Title and subtitle come from
+            <strong>Content → Identity</strong>.
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-sliders"></i> Layout Settings
+          </div>
+          <div id="hero-settings"></div>
+        </div>
+
+      </div><!-- /panel-hero -->
+
+      <!-- ══════════════ TAB: SECTIONS ══════════════ -->
+      <div id="panel-sections" class="tab-panel">
+
+        <div class="section-block">
+          <div class="section-block-title">
+            <i class="fa-solid fa-layer-group"></i> Section Manager
+          </div>
+          <div id="sections-list"></div>
+          <div class="info-note" style="margin-top:14px">
+            <i class="fa-solid fa-circle-info"></i>
+            Drag rows to reorder. Toggle the switch to show or hide each section on the public menu.
+            <strong>Menu Items</strong> is always rendered (cannot be hidden).
+          </div>
+        </div>
+
+      </div><!-- /panel-sections -->
+
+      <!-- ══════════════ TAB: CONTENT ══════════════ -->
+      <div id="panel-content" class="tab-panel">
+
+        <!-- Identity / Meta -->
+        <div class="meta-block">
+          <div class="meta-block-title">
+            <i class="fa-solid fa-store"></i> Restaurant Identity
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Name</label>
+              <input id="meta-name" type="text" class="input" placeholder="Maison Élite"/>
+            </div>
+            <div class="field">
+              <label>Tagline</label>
+              <input id="meta-tagline" type="text" class="input" placeholder="Fine Dining"/>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Currency Symbol</label>
+              <input id="meta-currency" type="text" class="input" placeholder="DA" style="max-width:100%"/>
+            </div>
+            <div class="field">
+              <label>Currency Position</label>
+              <select id="meta-currency-pos" class="input">
+                <option value="after">After — 1 200 DA</option>
+                <option value="before">Before — $ 1 200</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Hero Title <small style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-text-muted)">wrap *word* for italic accent</small></label>
+            <input id="meta-hero-title" type="text" class="input"
+                   placeholder="Experience *True* Gastronomy"/>
+          </div>
+          <div class="field">
+            <label>Hero Subtitle</label>
+            <input id="meta-hero-sub" type="text" class="input"
+                   placeholder="Crafted with passion — served with elegance"/>
+          </div>
+          <label class="check-row" style="margin-bottom:18px">
+            <input type="checkbox" id="meta-dark"/>
+            <span>Default to dark mode</span>
+          </label>
+          <button class="btn btn-primary btn-sm" onclick="Studio.saveMeta()">
+            <i class="fa-solid fa-floppy-disk"></i> Save Identity
+          </button>
+        </div>
+
+        <!-- Logo -->
+        <div class="meta-block">
+          <div class="meta-block-title">
+            <i class="fa-solid fa-image"></i> Logo
+          </div>
+          <div class="logo-upload-zone">
+            <input type="file" id="logo-file" accept="image/*"
+                   onchange="Studio.handleLogoUpload(this)"/>
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p>Click to upload logo — PNG, SVG, WebP · max 2 MB</p>
+          </div>
+          <div id="logo-preview" style="display:none;margin-top:12px;display:flex;align-items:center;gap:12px">
+            <img src="" alt="Logo" style="max-width:100px;max-height:50px;object-fit:contain;border-radius:7px;border:1px solid var(--c-border);background:var(--c-surface-mid);padding:5px"/>
+            <button class="btn btn-ghost btn-sm" onclick="Studio.removeLogo()">
+              <i class="fa-solid fa-trash"></i> Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="meta-block">
+          <div class="meta-block-title">
+            <i class="fa-solid fa-map-pin"></i> Contact Information
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label>Section Title</label>
+              <input id="contact-title" type="text" class="input" placeholder="Find Us"/>
+            </div>
+            <div class="field">
+              <label>Section Subtitle</label>
+              <input id="contact-subtitle" type="text" class="input" placeholder="We look forward to welcoming you"/>
+            </div>
+          </div>
+
+          <div class="contact-fields-list" id="contact-fields-list"></div>
+
+          <div class="info-note" style="margin-top:12px">
+            <i class="fa-solid fa-circle-info"></i>
+            Fill in a field to enable it. Use the eye toggle to show/hide it on the menu.
+            Enable the <strong>Contact</strong> section in the <strong>Sections</strong> tab to display this block.
+          </div>
+          <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="Studio.saveContact()">
+            <i class="fa-solid fa-floppy-disk"></i> Save Contact Info
+          </button>
+        </div>
+
+        <!-- Categories -->
+        <div class="meta-block">
+          <div class="list-head">
+            <div class="list-title"><i class="fa-solid fa-tags" style="color:var(--c-primary);margin-right:7px"></i>Categories</div>
+            <button class="btn btn-primary btn-sm" onclick="Studio.openCatModal()">
+              <i class="fa-solid fa-plus"></i> Add
+            </button>
+          </div>
+          <div id="cat-list"></div>
+          <div class="info-note" style="margin-top:12px">
+            <i class="fa-solid fa-circle-info"></i>
+            Drag rows to reorder. Eye toggle shows/hides on the public menu.
+          </div>
+        </div>
+
+        <!-- Items -->
+        <div class="meta-block">
+          <div class="list-head">
+            <div class="list-title"><i class="fa-solid fa-bowl-food" style="color:var(--c-primary);margin-right:7px"></i>Menu Items</div>
+            <button class="btn btn-primary btn-sm" onclick="Studio.openItemModal()">
+              <i class="fa-solid fa-plus"></i> Add
+            </button>
+          </div>
+          <div class="list-filters">
+            <input type="search" class="input" id="item-search"
+                   placeholder="Search items…" oninput="Studio.renderItemList()"/>
+            <select class="input" id="item-cat-filter" style="max-width:160px"
+                    onchange="Studio.renderItemList()">
+              <option value="">All categories</option>
+            </select>
+          </div>
+          <div id="item-list"></div>
+        </div>
+
+      </div><!-- /panel-content -->
+
+      <!-- ══════════════ TAB: EXPORT ══════════════ -->
+      <div id="panel-export" class="tab-panel">
+
+        <!-- Export -->
+        <div class="export-block">
+          <div class="export-block-title">
+            <i class="fa-solid fa-file-zipper"></i> Export &amp; Deploy
+          </div>
+          <p>
+            All design decisions live in <code>data/menu.json</code>.
+            Export a ZIP, push to GitHub — the public menu updates in ~30 seconds.
+          </p>
+          <div class="export-steps">
+            <div class="export-step">
+              <div class="step-n">1</div>
+              <div class="step-t">
+                <strong>Design in this studio</strong>
+                Colours, fonts, layout and content are auto-saved to localStorage after every change.
+              </div>
+            </div>
+            <div class="export-step">
+              <div class="step-n">2</div>
+              <div class="step-t">
+                <strong>Click Export ZIP</strong>
+                Downloads <code>data/menu.json</code> + uploaded images packaged and ready to commit.
+              </div>
+            </div>
+            <div class="export-step">
+              <div class="step-n">3</div>
+              <div class="step-t">
+                <strong>Push to GitHub</strong>
+                Extract · copy files into repo · commit · push.
+                GitHub Pages deploys automatically via <code>static.yml</code>.
+              </div>
+            </div>
+            <div class="export-step">
+              <div class="step-n">4</div>
+              <div class="step-t">
+                <strong>Repeat for each restaurant</strong>
+                Clone the repo, open the studio, apply a new preset and branding — done.
+              </div>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn btn-primary" onclick="Studio.exportZip()">
+              <i class="fa-solid fa-file-zipper"></i> Export ZIP
+            </button>
+            <a class="btn btn-ghost" href="index.html" target="_blank">
+              <i class="fa-solid fa-eye"></i> Preview Menu
+            </a>
+          </div>
+          <div class="export-progress" id="export-progress">
+            <div class="prog-bar-wrap"><div id="progress-bar"></div></div>
+            <div id="progress-label">Building…</div>
+          </div>
+        </div>
+
+        <!-- What's in the ZIP -->
+        <div class="export-block">
+          <div class="export-block-title">
+            <i class="fa-solid fa-folder-open"></i> ZIP Contents
+          </div>
+          <div style="font-family:monospace;font-size:.8rem;color:var(--c-text-soft);line-height:2.1;background:var(--c-surface-mid);border:1px solid var(--c-border);border-radius:10px;padding:16px 18px">
+            📦 menu-v4-[timestamp].zip<br/>
+            &nbsp;&nbsp;📄 data/<strong>menu.json</strong><br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↳ meta · tokens · layout · categories · items<br/>
+            &nbsp;&nbsp;🖼 assets/images/<strong>*.jpg / *.png</strong><br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↳ uploaded dish + logo images<br/>
+            &nbsp;&nbsp;📝 DEPLOY.txt
+          </div>
+          <div class="info-note" style="margin-top:14px">
+            <i class="fa-solid fa-circle-info"></i>
+            <code>menu.json</code> is the single source of truth.
+            The public <code>engine.js</code> reads it fresh on every page load
+            with <code>cache: 'no-store'</code>.
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-block">
+          <div class="settings-block-title">
+            <i class="fa-solid fa-key"></i> Change Password
+          </div>
+          <div class="field">
+            <label>Current Password</label>
+            <div class="pass-wrap">
+              <input id="old-pass" type="password" class="input" placeholder="Current password"/>
+              <button class="pass-eye" onclick="Studio.togglePassVis('old-pass',this)">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label>New Password</label>
+            <div class="pass-wrap">
+              <input id="new-pass" type="password" class="input" placeholder="Min. 6 characters"/>
+              <button class="pass-eye" onclick="Studio.togglePassVis('new-pass',this)">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Confirm New Password</label>
+            <div class="pass-wrap">
+              <input id="confirm-pass" type="password" class="input" placeholder="Repeat password"/>
+              <button class="pass-eye" onclick="Studio.togglePassVis('confirm-pass',this)">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+            <div id="pass-error" class="field-hint" style="color:#ef4444;display:none"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="Studio.changePassword()">
+            <i class="fa-solid fa-floppy-disk"></i> Update Password
+          </button>
+        </div>
+
+      </div><!-- /panel-export -->
+
+    </div><!-- /studio-controls -->
+
+    <!-- ── RIGHT PREVIEW ── -->
+    <div class="studio-preview">
+      <div class="preview-bar">
+        <span class="preview-dot"></span>
+        <strong>Live Preview</strong>
+        &nbsp;—&nbsp; tokens applied instantly on every change
+        <a href="index.html" target="_blank"
+           style="margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--c-primary);font-size:.78rem;font-weight:600">
+          Open full page <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.7rem"></i>
+        </a>
+      </div>
+      <div class="preview-frame-wrap">
+        <iframe id="preview-frame" src="index.html" title="Live preview"></iframe>
+      </div>
+    </div>
+
+  </div><!-- /studio-body -->
+</div><!-- /studio-shell -->
+</div><!-- /studio-view -->
+
+<!-- engine.js must load first so Engine.applyTokens / injectFonts are available to studio.js -->
+<script src="assets/js/engine.js"></script>
+<script src="assets/js/studio.js"></script>
+
+<!-- Wire preview iframe: listen for TOKEN_UPDATE postMessage -->
+<script>
+  window.addEventListener('message', e => {
+    if (!e.data || e.data.type !== 'TOKEN_UPDATE') return;
+    const frame = document.getElementById('preview-frame');
+    if (!frame || !frame.contentWindow) return;
+    // forward to iframe (it will apply the tokens itself once engine.js loads)
+    frame.contentWindow.postMessage(e.data, '*');
+  });
+
+  // When iframe loads, push current tokens immediately
+  document.getElementById('preview-frame').addEventListener('load', () => {
+    // Give engine.js inside the iframe time to init, then push live state
+    setTimeout(() => {
+      const frame = document.getElementById('preview-frame');
+      if (!frame || !frame.contentWindow) return;
+      // Studio.applyLive() does the postMessage; trigger it after iframe load
+      if (typeof Studio !== 'undefined') Studio.applyLive?.();
+    }, 400);
+  });
+</script>
+
+</body>
+</html>
